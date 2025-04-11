@@ -1,20 +1,18 @@
 from flask import Flask
-from predictor import prever_resultado
-from alerts import send_telegram_message
+from predictor import prever_resultado  # Importa a função do predictor.py
+import os
 
 app = Flask(__name__)
 
-@app.route("/")
+# Rota principal que retorna a previsão
+@app.route('/')
 def home():
-    print("Bot de Apostas com IA Iniciado...")
-
+    # Chama a função de previsão
     resultado = prever_resultado()
-    print("Bot sugere:", resultado)
 
-    # Envia alerta no Telegram
-    send_telegram_message(f"🤖 Bot de Apostas:\nSugestão: {resultado}")
+    # Retorna o resultado como resposta para o usuário
+    return f"Resultado da previsão: {resultado}"
 
-    return f"<h2>🤖 Bot de Apostas com IA</h2><p>Sugestão: {resultado}</p>"
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=10000)
+if __name__ == '__main__':
+    # Ajusta a porta conforme a variável de ambiente PORT fornecida pelo Render
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
