@@ -18,19 +18,16 @@ except FileNotFoundError:
 df["goal_diff"] = df["home_goals"] - df["away_goals"]
 
 # Neste exemplo, usaremos as seguintes features:
-# - goal_diff: diferença entre gols de casa e fora.
-# - home_last5_avg: média de gols marcados em casa nos últimos 5 jogos.
-# - away_last5_avg: média de gols sofridos pelo visitante nos últimos 5 jogos.
-# - pos_home: posição do time da casa.
-# - pos_away: posição do time visitante.
-#
-# Certifique-se de que essas colunas existem no CSV.
 features = ["goal_diff", "home_last5_avg", "away_last5_avg", "pos_home", "pos_away"]
 X = df[features]
 y = df["result"]
 
-# Dividindo os dados para treino e teste
+# Divide os dados para treino e teste
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Define o número de folds de cross-validation de acordo com o tamanho do conjunto de treino
+num_cv = max(2, min(5, len(y_train)))
+print("Usando validação cruzada com {} folds".format(num_cv))
 
 # Cria um pipeline com escalonamento e RandomForest
 pipeline = Pipeline([
@@ -39,27 +36,27 @@ pipeline = Pipeline([
 ])
 
 # Uso de cross-validation para avaliar o desempenho
-cv_scores = cross_val_score(pipeline, X_train, y_train, cv=5)
+cv_scores = cross_val_score(pipeline, X_train, y_train, cv=num_cv)
 print("CV Scores:", cv_scores)
 print("Média CV Score:", round(cv_scores.mean() * 100, 2), "%")
 
-# Treina o modelo final com o dataset de treinamento completo
+# Treina o modelo final com o conjunto de treino completo
 pipeline.fit(X_train, y_train)
 
-# Avalia no conjunto de teste
+# Avalia o modelo no conjunto de teste
 predictions = pipeline.predict(X_test)
 print("Acurácia do modelo no conjunto de teste:", round(accuracy_score(y_test, predictions) * 100, 2), "%")
 
 # Função de previsão para ser utilizada pelo bot
 def prever_resultado(gol_time_casa, gol_time_fora, home_last5_avg=1.5, away_last5_avg=1.3, pos_home=3, pos_away=5):
     """
-    Essa função recebe os parâmetros do jogo e retorna a previsão:
-    - gol_time_casa: gols marcados pelo time da casa no jogo atual (entrada)
-    - gol_time_fora: gols sofridos pelo time visitante no jogo atual (entrada)
-    - home_last5_avg: média de gols marcados nos últimos 5 jogos (pode ser ajustada dinamicamente)
-    - away_last5_avg: média de gols sofridos pelo visitante nos últimos 5 jogos
-    - pos_home: posição atual do time da casa
-    - pos_away: posição atual do time visitante
+    Recebe os parâmetros do jogo e retorna a previsão:
+      - gol_time_casa: gols marcados pelo time da casa no jogo atual
+      - gol_time_fora: gols sofridos pelo time visitante no jogo atual
+      - home_last5_avg: média de gols marcados nos últimos 5 jogos (pode ser dinâmica)
+      - away_last5_avg: média de gols sofridos pelo visitante nos últimos 5 jogos
+      - pos_home: posição do time da casa
+      - pos_away: posição do time visitante
     """
     dif = gol_time_casa - gol_time_fora
     entrada = pd.DataFrame({
