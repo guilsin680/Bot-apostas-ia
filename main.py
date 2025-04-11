@@ -16,7 +16,7 @@ def rodar_bot():
 def status():
     return "Bot de Apostas com IA está rodando!"
 
-if _name_ == "_main_":
+if __name__ == "_main_":
     # Roda o bot em uma thread separada
     t = threading.Thread(target=rodar_bot)
     t.daemon = True
