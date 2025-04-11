@@ -1,42 +1,51 @@
 import pandas as pd
+import numpy as np
 from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import cross_val_score
+import pickle
 
-def prever_resultado():
-    # Carregar o dataset
-    df = pd.read_csv('data.csv')  # Seu CSV deve ter as colunas 'home_goals' e 'away_goals'
-    
-    # Pré-processamento
-    df['gol_time_casa'] = df['home_goals']
-    df['gol_time_fora'] = df['away_goals']
-    
-    # Features e alvo
-    X = df[['gol_time_casa', 'gol_time_fora']]  # Gols dos times
-    y = df['result']  # Resultado da partida (vitória, derrota, empate)
-    
+# Carregar o arquivo CSV com dados de partidas
+def carregar_dados():
+    df = pd.read_csv('data.csv')
+    return df
+
+# Treinamento e previsão com o modelo
+def treinar_modelo():
+    df = carregar_dados()
+    X = df[['home_goals', 'away_goals']]  # Características de gols
+    y = df['result']  # Resultado do jogo (exemplo: 1 = vitória do time da casa)
+
     # Dividir em treino e teste
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-    
-    # Normalização
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+    # Normalização dos dados
     scaler = StandardScaler()
     X_train = scaler.fit_transform(X_train)
     X_test = scaler.transform(X_test)
-    
-    # Treinamento do modelo
-    model = LogisticRegression()
-    model.fit(X_train, y_train)
-    
-    # Acurácia do modelo no conjunto de teste
-    accuracy = model.score(X_test, y_test)
-    
-    # Validando com validação cruzada
-    cv_scores = cross_val_score(model, X, y, cv=2)
-    print(f"CV Scores: {cv_scores}")
-    print(f"Média CV Score: {cv_scores.mean() * 100:.2f}%")
-    
-    # Predição
-    prediction = model.predict([[1, 2]])  # Exemplo de previsão (1 gol em casa e 2 fora)
-    
-    return prediction[0]
+
+    # Treinar o modelo
+    modelo = RandomForestClassifier()
+    modelo.fit(X_train, y_train)
+
+    # Salvar o modelo treinado
+    with open('modelo.pkl', 'wb') as f:
+        pickle.dump(modelo, f)
+    return modelo
+
+# Carregar o modelo treinado
+def carregar_modelo():
+    try:
+        with open('modelo.pkl', 'rb') as f:
+            modelo = pickle.load(f)
+    except FileNotFoundError:
+        modelo = treinar_modelo()  # Se o modelo não existir, treine um novo
+    return modelo
+
+# Fazer uma previsão
+def prever_resultado():
+    modelo = carregar_modelo()
+    # Exemplificando uma previsão
+    dados_novos = np.array([[1, 2]])  # Exemplo de dados de gols (casa vs fora)
+    resultado = modelo.predict(dados_novos)
+    return f"Previsão do modelo: {'Vitória do time da casa' if resultado[0] == 1 else 'Vitória do time visitante'}"

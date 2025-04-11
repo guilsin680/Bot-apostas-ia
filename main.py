@@ -1,18 +1,19 @@
 import os
+import time
+from flask import Flask
 from predictor import prever_resultado
 from telegram_alert import enviar_telegram
-import time
 
+app = Flask(__name__)
+
+# Defina a porta que o Render fornecer (para o Flask)
+port = int(os.environ.get("PORT", 5000))
+
+@app.route('/')
 def home():
-    # Obtenha a previsão
     resultado = prever_resultado()
-    
-    # Envie a previsão para o Telegram
-    mensagem = f"A previsão para o próximo jogo é: {resultado}"
-    enviar_telegram(mensagem)
+    enviar_telegram(resultado)  # Envia a previsão para o Telegram
+    return f"Previsão enviada: {resultado}"
 
 if __name__ == "__main__":
-    while True:
-        home()
-        # Aguarda 10 minutos antes de enviar novamente
-        time.sleep(600)  # 600 segundos = 10 minutos
+    app.run(host="0.0.0.0", port=port)
