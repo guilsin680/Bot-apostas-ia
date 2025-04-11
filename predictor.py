@@ -6,10 +6,12 @@ from sklearn.preprocessing import StandardScaler
 import os
 
 # Carregar o arquivo CSV com os dados históricos
-# Certifique-se de que o arquivo "historico_jogos.csv" está no mesmo diretório que este código
 df = pd.read_csv("historico_jogos.csv")
 
-# Supondo que as colunas sejam 'gol_time_casa', 'gol_time_fora' e 'resultado' (vitoria/empate/derrota)
+# Verificar as colunas do DataFrame para depuração
+print("Colunas no arquivo CSV:", df.columns)
+
+# Ajuste os nomes das colunas conforme necessário (verifique as colunas reais no arquivo CSV)
 X = df[['gol_time_casa', 'gol_time_fora']]  # Características (gols dos times)
 y = df['resultado']  # Resultado do jogo (vitória/empate/derrota)
 
