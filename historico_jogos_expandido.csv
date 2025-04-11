@@ -1,0 +1,11 @@
+date,home_team,away_team,home_goals,away_goals,home_last5_avg,away_last5_avg,pos_home,pos_away,result
+2024-01-01,Team A,Team F,2,1,1.8,1.4,2,7,H
+2024-01-02,Team B,Team G,0,2,1.2,1.6,5,4,A
+2024-01-03,Team C,Team H,1,1,1.5,1.5,3,3,D
+2024-01-04,Team D,Team I,3,1,2.0,1.2,1,8,H
+2024-01-05,Team E,Team J,1,1,1.3,1.3,4,6,D
+2024-01-06,Team A,Team G,2,2,1.8,1.5,2,5,D
+2024-01-07,Team B,Team H,0,1,1.2,1.0,5,3,A
+2024-01-08,Team C,Team I,1,0,1.7,1.2,3,7,H
+2024-01-09,Team D,Team J,2,2,1.9,1.6,1,6,D
+2024-01-10,Team E,Team F,0,3,1.4,2.0,4,2,A
