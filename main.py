@@ -1,27 +1,18 @@
 from flask import Flask
-import threading
-import time
+from predictor import prever_resultado  # <- Importa a IA
 
 app = Flask(__name__)
 
-def rodar_bot():
-    while True:
-        print("Bot de Apostas com IA Iniciado...")
-        # Simulação da lógica do bot de IA
-        print("Rodando modelo de IA para prever resultado...")
-        print("Bot sugere: apostar no time A")
-        time.sleep(30)  # Espera 30 segundos antes de repetir
+@app.route('/')
+def index():
+    # Exemplo: time da casa fez 2 gols, visitante 1
+    previsao = prever_resultado(2, 1)  # Aqui você pode trocar os gols dinamicamente
+    return f"""
+    <h1>Bot de Apostas com IA</h1>
+    <p>Rodando modelo de IA para prever resultado...</p>
+    <p><strong>Bot sugere:</strong> apostar no resultado: {previsao}</p>
+    """
+    
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=10000)
 
-@app.route("/")
-def status():
-    return "Bot de Apostas com IA está rodando!"
-
-import os
-
-if __name__ == "__main__":
-    t = threading.Thread(target=rodar_bot)
-    t.daemon = True
-    t.start()
-
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
