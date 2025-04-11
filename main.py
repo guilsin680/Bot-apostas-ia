@@ -1,18 +1,13 @@
 from flask import Flask
 from predictor import prever_resultado  # Importa a função do predictor.py
-import os
 
 app = Flask(__name__)
 
-# Rota principal que retorna a previsão
-@app.route('/')
+@app.route("/")
 def home():
-    # Chama a função de previsão
-    resultado = prever_resultado()
+    # Usando valores fixos para teste ou demonstração
+    resultado = prever_resultado(2, 1)  # Exemplo: 2 gols time casa, 1 gol time fora
+    return f"<h1>Previsão: {resultado}</h1>"
 
-    # Retorna o resultado como resposta para o usuário
-    return f"Resultado da previsão: {resultado}"
-
-if __name__ == '__main__':
-    # Ajusta a porta conforme a variável de ambiente PORT fornecida pelo Render
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+if __name__ == "__main__":
+    app.run(host='0.0.0.0', port=10000)
