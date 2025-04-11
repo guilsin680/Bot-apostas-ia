@@ -16,9 +16,12 @@ def rodar_bot():
 def status():
     return "Bot de Apostas com IA está rodando!"
 
-if __name__ == "_main_":
+import os
+
+if __name__ == "__main__":
     t = threading.Thread(target=rodar_bot)
     t.daemon = True
     t.start()
 
-    app.run(host="0.0.0.0", port=10000)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
