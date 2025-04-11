@@ -1,32 +1,18 @@
-from flask import Flask
-import threading
-import schedule
-import time
+import os
 from predictor import prever_resultado
 from telegram_alert import enviar_telegram
+import time
 
-app = Flask(__name__)
-
-def agendamento():
-    # Envia a cada 10 minutos
-    schedule.every(10).minutes.do(executar_envio)
-
-    while True:
-        schedule.run_pending()
-        time.sleep(60)
-
-def executar_envio():
-    resultado = prever_resultado()
-    hora = time.strftime('%H:%M')
-    enviar_telegram(f"🔔 Previsão automática ({hora}):\n{resultado}")
-
-@app.route("/")
 def home():
+    # Obtenha a previsão
     resultado = prever_resultado()
-    return f"<h1>Previsão atual:</h1><p>{resultado}</p>"
-
-# Roda o agendamento em segundo plano
-threading.Thread(target=agendamento, daemon=True).start()
+    
+    # Envie a previsão para o Telegram
+    mensagem = f"A previsão para o próximo jogo é: {resultado}"
+    enviar_telegram(mensagem)
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=10000)
+    while True:
+        home()
+        # Aguarda 10 minutos antes de enviar novamente
+        time.sleep(600)  # 600 segundos = 10 minutos
