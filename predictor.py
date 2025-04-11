@@ -1,42 +1,78 @@
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.metrics import accuracy_score
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
 
-# Carrega os dados do CSV
+# Utilize o novo CSV expandido
+csv_file = "historico_jogos_expandido.csv"
+
 try:
-    df = pd.read_csv("historico_jogos.csv")
+    df = pd.read_csv(csv_file)
 except FileNotFoundError:
-    print("Arquivo 'historico_jogos.csv' não encontrado. Coloque ele na mesma pasta do script.")
+    print(f"Arquivo '{csv_file}' não encontrado. Coloque ele na mesma pasta do script.")
     exit()
 
 # Cria uma feature simples: diferença de gols
 df["goal_diff"] = df["home_goals"] - df["away_goals"]
 
-# Adicionando mais features para melhorar a acurácia
-df["home_win"] = (df["home_goals"] > df["away_goals"]).astype(int)
-df["away_win"] = (df["away_goals"] > df["home_goals"]).astype(int)
-
-# Define X (features) e y (alvo)
-X = df[["goal_diff", "home_win", "away_win"]]
+# Neste exemplo, usaremos as seguintes features:
+# - goal_diff: diferença entre gols de casa e fora.
+# - home_last5_avg: média de gols marcados em casa nos últimos 5 jogos.
+# - away_last5_avg: média de gols sofridos pelo visitante nos últimos 5 jogos.
+# - pos_home: posição do time da casa.
+# - pos_away: posição do time visitante.
+#
+# Certifique-se de que essas colunas existem no CSV.
+features = ["goal_diff", "home_last5_avg", "away_last5_avg", "pos_home", "pos_away"]
+X = df[features]
 y = df["result"]
 
-# Divide em treino e teste
+# Dividindo os dados para treino e teste
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-# Cria e treina o modelo
-model = RandomForestClassifier(n_estimators=100, random_state=42)  # Ajuste no número de árvores
-model.fit(X_train, y_train)
+# Cria um pipeline com escalonamento e RandomForest
+pipeline = Pipeline([
+    ("scaler", StandardScaler()),
+    ("rf", RandomForestClassifier(n_estimators=100, random_state=42))
+])
 
-# Avalia o modelo
-pred = model.predict(X_test)
-acc = accuracy_score(y_test, pred)
-print("Acurácia do modelo:", round(acc * 100, 2), "%")
+# Uso de cross-validation para avaliar o desempenho
+cv_scores = cross_val_score(pipeline, X_train, y_train, cv=5)
+print("CV Scores:", cv_scores)
+print("Média CV Score:", round(cv_scores.mean() * 100, 2), "%")
 
-# Função de previsão
-def prever_resultado(gol_time_casa, gol_time_fora):
+# Treina o modelo final com o dataset de treinamento completo
+pipeline.fit(X_train, y_train)
+
+# Avalia no conjunto de teste
+predictions = pipeline.predict(X_test)
+print("Acurácia do modelo no conjunto de teste:", round(accuracy_score(y_test, predictions) * 100, 2), "%")
+
+# Função de previsão para ser utilizada pelo bot
+def prever_resultado(gol_time_casa, gol_time_fora, home_last5_avg=1.5, away_last5_avg=1.3, pos_home=3, pos_away=5):
+    """
+    Essa função recebe os parâmetros do jogo e retorna a previsão:
+    - gol_time_casa: gols marcados pelo time da casa no jogo atual (entrada)
+    - gol_time_fora: gols sofridos pelo time visitante no jogo atual (entrada)
+    - home_last5_avg: média de gols marcados nos últimos 5 jogos (pode ser ajustada dinamicamente)
+    - away_last5_avg: média de gols sofridos pelo visitante nos últimos 5 jogos
+    - pos_home: posição atual do time da casa
+    - pos_away: posição atual do time visitante
+    """
     dif = gol_time_casa - gol_time_fora
-    home_win = 1 if gol_time_casa > gol_time_fora else 0
-    away_win = 1 if gol_time_fora > gol_time_casa else 0
-    entrada = pd.DataFrame({"goal_diff": [dif], "home_win": [home_win], "away_win": [away_win]})
-    return model.predict(entrada)[0]
+    entrada = pd.DataFrame({
+        "goal_diff": [dif],
+        "home_last5_avg": [home_last5_avg],
+        "away_last5_avg": [away_last5_avg],
+        "pos_home": [pos_home],
+        "pos_away": [pos_away]
+    })
+    return pipeline.predict(entrada)[0]
+
+# Exemplo de uso:
+if __name__ == "__main__":
+    print("Exemplo: Time da casa fez 2 gols, visitante 1")
+    resultado_previsto = prever_resultado(2, 1)
+    print("Previsão:", resultado_previsto)
