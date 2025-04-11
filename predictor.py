@@ -1,33 +1,43 @@
 import pandas as pd
-from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LogisticRegression
-from sklearn.pipeline import make_pipeline
+from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.preprocessing import StandardScaler
+from sklearn.ensemble import RandomForestClassifier
 import os
 
-# Carregar o arquivo CSV com os dados históricos
-df = pd.read_csv("historico_jogos.csv")
+# Carregando os dados
+df = pd.read_csv("data.csv")
 
-# Verificar as colunas do DataFrame para depuração
 print("Colunas no arquivo CSV:", df.columns)
 
-# Usar os nomes corretos das colunas
-X = df[['home_goals', 'away_goals']]  # Características (gols dos times)
-y = df['result']  # Resultado do jogo (vitória/empate/derrota)
+# Ajusta os nomes das colunas para os que estão no CSV
+X = df[['home_goals', 'away_goals']]
+y = df['result']
 
-# Dividindo os dados em treino e teste
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+# Pré-processamento
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
 
-# Criar o pipeline de processamento e treinamento
-pipeline = make_pipeline(StandardScaler(), LogisticRegression())
+# Dividir dados para treino/teste
+X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2)
 
-# Treinando o modelo
-pipeline.fit(X_train, y_train)
+# Treinamento
+model = RandomForestClassifier()
+model.fit(X_train, y_train)
 
-# Função para prever o resultado
+# Validação cruzada (opcional, só para análise)
+scores = cross_val_score(model, X_scaled, y, cv=2)
+print("Usando validação cruzada com 2 folds")
+print("CV Scores:", scores)
+print("Média CV Score:", round(scores.mean() * 100, 2), "%")
+print("Acurácia do modelo no conjunto de teste:", round(model.score(X_test, y_test) * 100, 2), "%")
+
+# Função de previsão
 def prever_resultado(gol_time_casa, gol_time_fora):
-    # Realizando a previsão
-    previsao = pipeline.predict([[gol_time_casa, gol_time_fora]])
+    entrada = pd.DataFrame([[gol_time_casa, gol_time_fora]], columns=['home_goals', 'away_goals'])
+    entrada_scaled = scaler.transform(entrada)
+    predicao = model.predict(entrada_scaled)[0]
 
-    # Retorna a previsão como string
-    return f"Apostar no {previsao[0]}"
+    from alerts import send_telegram_message
+    send_telegram_message(f"Resultado previsto: {predicao}")
+
+    return predicao
